@@ -6,7 +6,7 @@ int maxarr[2 * MAXN];
 int minarr[2 * MAXN];
 long long count = 0;
 int countarr[2 * MAXN] = {0};
-void buildleftarray(int left, int mid){
+void buildleftarr(int left, int mid){
 	minarr[mid] = maxarr[mid] = array[mid];
 	for (int i = mid - 1; i >= left; i--){
 		if (array[i] < minarr[i + 1])
@@ -19,7 +19,7 @@ void buildleftarray(int left, int mid){
 			maxarr[i] = maxarr[i + 1];
 	}
 }
-void buildrightarray(int right, int mid){
+void buildrightarr(int right, int mid){
 	minarr[mid + 1] = maxarr[mid + 1] = array[mid + 1];
 	for (int i = mid + 2; i <= right; i++){
 		if (array[i] < minarr[i - 1])
@@ -32,25 +32,7 @@ void buildrightarray(int right, int mid){
 			maxarr[i] = maxarr[i - 1];
 	}
 }
-void dp(int left, int right){
-	if (left == right){
-		count++;
-		return;
-	}
-	if (left == right - 1){
-		if (array[left] + 1 == array[right] || array[right] + 1 == array[left])
-			count++;
-		dp(left, left);
-		dp(right, right);
-		return;
-	}
-	int mid = (left + right) / 2;
-	dp(left, mid);
-	dp(mid + 1, right);
-	buildleftarray(left, mid);
-	buildrightarray(right, mid);
-	
-#ifndef NDEBUG
+void printmaxmin(int left, int right){
 	printf("max:");
 	for (int i = left; i <= right; i++)
 		printf("%d ", maxarr[i]);
@@ -58,8 +40,9 @@ void dp(int left, int right){
 	for (int i = left; i <= right; i++)
 		printf("%d ", minarr[i]);
 	printf("\n");
-#endif
-//left large left small
+	return;
+}
+long long llls(int left, int right, int mid){
 	long long segcount = 0;
 	for (int i = mid; i >= left; i--){
 		int x = maxarr[i] - minarr[i];
@@ -69,9 +52,10 @@ void dp(int left, int right){
 			}
 		}
 	}
-	count += segcount;
-//right large right small
-	segcount = 0;
+	return segcount;
+}
+long long rlrs(int left, int right, int mid){
+	long long segcount = 0;
 	for (int i = mid + 1; i <= right; i++){
 		int x = maxarr[i] - minarr[i];
 		if (i - x <= mid && i - x >= left){
@@ -80,9 +64,10 @@ void dp(int left, int right){
 			}
 		}
 	}
-	count += segcount;
-//left large right small
-	segcount = 0;
+	return segcount;
+}
+long long llrs(int left, int right, int mid){
+	long long segcount = 0;
 	int maxp = mid + 1, minp = mid + 1;
 	for (int i = mid; i >= left; i--){
 		while (maxp <= right && maxarr[maxp] < maxarr[i]){
@@ -97,17 +82,18 @@ void dp(int left, int right){
 		if (countarr[value] >= 0)
 			segcount += countarr[value];
 	}
-	count += segcount;
+//init countarr array
 	for (int i = mid + 1; i <= right; i++){
 		countarr[minarr[i] + i] = 0;
 	}
 	for (int i = mid; i >= left; i--){
 		countarr[MAXN - (minarr[i] - i)] = 0;
 	}
-	
-//right large left small
-	segcount = 0;
-	maxp = mid, minp = mid;
+	return segcount;
+}
+long long rlls(int left, int right, int mid){
+	long long segcount = 0;
+	int maxp = mid, minp = mid;
 	for (int i = mid + 1; i <= right; i++){
 		while (maxp >= left && maxarr[maxp] < maxarr[i]){
 			countarr[MAXN - (minarr[maxp] - maxp)]++;
@@ -122,14 +108,49 @@ void dp(int left, int right){
 			segcount += countarr[MAXN - value];
 		}
 	}
-	count += segcount;
+//init countarr array
 	for (int i = mid + 1; i <= right; i++){
 		countarr[minarr[i] + i] = 0;
 	}
 	for (int i = mid; i >= left; i--){
 		countarr[MAXN - (minarr[i] - i)] = 0;
 	}
+	return segcount;
+}
+void dp(int left, int right){
+	if (left == right){
+		count++;
+		return;
+	}
 	
+	int mid = (left + right) / 2;
+	dp(left, mid);
+	dp(mid + 1, right);
+	
+	buildleftarr(left, mid);
+	buildrightarr(right, mid);
+	
+#ifndef NDEBUG
+	printmaxmin(left, right);
+#endif
+	long long segcount;
+	
+//left large left small
+	segcount = llls(left, right, mid);
+	count += segcount;
+	
+//right large right small
+	segcount = rlrs(left, right, mid);
+	count += segcount;
+	
+//left large right small
+	segcount = llrs(left, right, mid);
+	count += segcount;
+	
+//right large left small
+	segcount = rlls(left, right, mid);
+	count += segcount;
+
 	return;
 }
 int main(void)
